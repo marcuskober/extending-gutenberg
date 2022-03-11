@@ -4,6 +4,9 @@ import { Fragment } from '@wordpress/element'
 import { InspectorControls } from '@wordpress/block-editor'
 import { PanelBody, RangeControl, __experimentalUnitControl as UnitControl } from '@wordpress/components'
 
+/**
+ * Callback for the BlockEdit filter
+ */
 const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
   return ( props ) => {
     if (props.name !== 'core/paragraph') {
@@ -81,6 +84,9 @@ const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
   }
 }, 'withInspectorControls')
 
+/**
+ * Hook into registerBlockType to add our custom prop
+ */
 addFilter(
   'blocks.registerBlockType',
 	'extending-gutenberg/add-attributes',
@@ -101,7 +107,10 @@ addFilter(
   }
 )
 
-addFilter(
+/**
+ * Hook into BlockEdit to add our custom inspector controls
+ */
+ addFilter(
   'editor.BlockEdit',
   'extending-gutenberg/edit',
   withInspectorControls
