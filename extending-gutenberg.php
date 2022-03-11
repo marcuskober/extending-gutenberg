@@ -34,21 +34,19 @@ add_filter('render_block', function(string $blockContent, array $block): string 
         return $blockContent;
     }
 
-    $id = '';
-    if (isset($block['attrs']['inline_css_id'])) {
-        $id = $block['attrs']['inline_css_id'];
+    // Check if block has id
+    $blockHasId = preg_match('/id="([^"]+)"/', $blockContent, $matches);
+
+    if ($blockHasId) {
+        $id = $matches[1];
     }
-
-    if (isset($block['attrs']['anchor'])) {
-        $id = $block['attrs']['anchor'];
-    }
-
-    $id = 'extgut-' . uniqid();
-
-    if (! preg_match('/' . $id . '/', $blockContent)) {
+    else {
+        // Create new block id
+        $id ='extgut-' . uniqid();
         $blockContent = preg_replace('#^<([^>]+)>#m', '<$1 id="' . $id . '">', $blockContent);
     }
 
+    // Create css
     $style = sprintf(
         '<style>#%s{column-count:%s; column-gap:%s;}</style>',
         $id,

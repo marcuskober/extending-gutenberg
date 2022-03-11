@@ -223,3 +223,44 @@ const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
   }
 }, 'withInspectorControls')
 ```
+
+### 7. Backend is ready. Parse blocks to add frontend styling
+
+In your plugin file you can now hook into `render_block` filter:
+
+```php
+add_filter('render_block', function(string $blockContent, array $block): string {
+    if ($block['blockName'] !== 'core/paragraph' || ! isset($block['attrs']['extendedSettings'])) {
+        return $blockContent;
+    }
+
+    // Check if block has id
+    $blockHasId = preg_match('/id="([^"]+)"/', $blockContent, $matches);
+
+    if ($blockHasId) {
+        $id = $matches[1];
+    }
+    else {
+        // Create new block id
+        $id ='extgut-' . uniqid();
+        $blockContent = preg_replace('#^<([^>]+)>#m', '<$1 id="' . $id . '">', $blockContent);
+    }
+
+    // Create css
+    $style = sprintf(
+        '<style>#%s{column-count:%s; column-gap:%s;}</style>',
+        $id,
+        isset($block['attrs']['extendedSettings']['columnCount']) ? $block['attrs']['extendedSettings']['columnCount'] : 1,
+        isset($block['attrs']['extendedSettings']['columnGap']) ? $block['attrs']['extendedSettings']['columnGap'] : '20px'
+    );
+
+    return $style.$blockContent;
+}, 10, 2 );
+```
+
+### 8. Done. :)
+
+---
+
+Cheers,
+Marcus
