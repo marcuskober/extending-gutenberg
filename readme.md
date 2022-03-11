@@ -18,7 +18,7 @@ Inside your new folder create a php plugin file, e.g. `extending-gutenberg.php`.
 
 Inside `wp-content/plugins/extending-gutenberg` run the following commands:
 
-  npm init
-  npm install --save-dev @wordpress/scripts
+    npm init
+    npm install --save-dev @wordpress/scripts
 
 This installs all needed scripts and tools for the build step. [More info](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-scripts/)
