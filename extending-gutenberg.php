@@ -29,3 +29,29 @@ add_action('enqueue_block_editor_assets', function() {
     );
 });
 
+add_filter('render_block', function(string $blockContent, array $block): string {
+    if ($block['blockName'] !== 'core/paragraph' || ! isset($block['attrs']['extendedSettings'])) {
+        return $blockContent;
+    }
+
+    $id = '';
+    if (isset($block['attrs']['inline_css_id'])) {
+        $id = $block['attrs']['inline_css_id'];
+    }
+
+    if (isset($block['attrs']['anchor'])) {
+        $id = $block['attrs']['anchor'];
+    }
+
+    $id = 'extgut-' . uniqid();
+
+    if (! preg_match('/' . $id . '/', $blockContent)) {
+        $blockContent = preg_replace('#^<([^>]+)>#m', '<$1 id="' . $id . '">', $blockContent);
+    }
+
+    $style = sprintf('<style>#%s{column-count:%s;}</style>', $id, $block['attrs']['extendedSettings']['columnCount']);
+
+    return $style.$blockContent;
+}, 10, 2 );
+
+
