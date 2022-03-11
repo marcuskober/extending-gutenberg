@@ -33,16 +33,18 @@ Run `npm start` to begin with development. *wp-scripts* creates a folder `build`
 
 Open `wp-content/plugins/extending-gutenberg/extending-gutenberg.php` and add the following comment block so that WordPress is able to detect and integrate your plugin:
 
-    <?php
-    /*
-    Plugin Name:    Extending Gutenberg
-    Description:    A sample plugin on how to extend existing Gutenberg blocks
-    Theme URI:      https://marcuskober.de
-    Author:         Marcus Kober
-    Author URI:     https://marcuskober.de
-    Version:        1.0.0
-    Text Domain:    extending-gutenberg
-    */
+```php
+<?php
+/*
+Plugin Name:    Extending Gutenberg
+Description:    A sample plugin on how to extend existing Gutenberg blocks
+Theme URI:      https://marcuskober.de
+Author:         Marcus Kober
+Author URI:     https://marcuskober.de
+Version:        1.0.0
+Text Domain:    extending-gutenberg
+*/
+```
 
 ### 5. Enqueue JavaScript file
 
@@ -52,162 +54,172 @@ Enqueue the JavaScript file with the hook `enqueue_block_editor_assets`.
 
 Your plugin file should now look something like that:
 
-    <?php
-    /*
-    Plugin Name:    Extending Gutenberg
-    Description:    A sample plugin on how to extend existing Gutenberg blocks
-    Theme URI:      https://marcuskober.de
-    Author:         Marcus Kober
-    Author URI:     https://marcuskober.de
-    Version:        1.0.0
-    Text Domain:    extending-gutenberg
-    */
+```php
+<?php
+/*
+Plugin Name:    Extending Gutenberg
+Description:    A sample plugin on how to extend existing Gutenberg blocks
+Theme URI:      https://marcuskober.de
+Author:         Marcus Kober
+Author URI:     https://marcuskober.de
+Version:        1.0.0
+Text Domain:    extending-gutenberg
+*/
 
-    declare(strict_types=1);
+declare(strict_types=1);
 
-    if (! defined('ABSPATH')) {
-        exit;
-    }
+if (! defined('ABSPATH')) {
+    exit;
+}
 
-    define('EXTGUT_DIR', plugin_dir_path(__FILE__));
-    define('EXTGUT_URL', plugin_dir_url(__FILE__));
+define('EXTGUT_DIR', plugin_dir_path(__FILE__));
+define('EXTGUT_URL', plugin_dir_url(__FILE__));
 
-    add_action('enqueue_block_editor_assets', function() {
-        $config = require_once EXTGUT_DIR . '/build/index.asset.php';
+add_action('enqueue_block_editor_assets', function() {
+    $config = require_once EXTGUT_DIR . '/build/index.asset.php';
 
-        wp_enqueue_script(
-            'extending-gutenberg-script',
-            EXTGUT_URL . '/build/index.js',
-            $config['dependencies'],
-            $config['version']
-        );
-    });
+    wp_enqueue_script(
+        'extending-gutenberg-script',
+        EXTGUT_URL . '/build/index.js',
+        $config['dependencies'],
+        $config['version']
+    );
+});
+```
 
 ### 6. Let's get our hands dirty with JavaScript
 
 Now it's time to import all our needed components. Let's put this into `src/index.js`:
 
-    import { addFilter } from '@wordpress/hooks'
-    import { createHigherOrderComponent } from '@wordpress/compose'
-    import { Fragment } from '@wordpress/element'
-    import { InspectorControls } from '@wordpress/block-editor'
-    import { PanelBody, RangeControl, __experimentalUnitControl as UnitControl } from '@wordpress/components'
+```js
+import { addFilter } from '@wordpress/hooks'
+import { createHigherOrderComponent } from '@wordpress/compose'
+import { Fragment } from '@wordpress/element'
+import { InspectorControls } from '@wordpress/block-editor'
+import { PanelBody, RangeControl, __experimentalUnitControl as UnitControl } from '@wordpress/components'
+```
 
 First we need to hook into `blocks.registerBlockType` to add our custom attribute `extendedSettings` that will hold all custom settings. 
 
-    addFilter(
-      'blocks.registerBlockType',
-      'extending-gutenberg/add-attributes',
-      (props, name) => {
-        // if not core paragraph block just return props
-        if (name !== 'core/paragraph') {
-          return props
-        }
+```js
+addFilter(
+  'blocks.registerBlockType',
+  'extending-gutenberg/add-attributes',
+  (props, name) => {
+    // if not core paragraph block just return props
+    if (name !== 'core/paragraph') {
+      return props
+    }
 
-        // extend attributs with the new extendedSettings object
-        const attributes = {
-          ...props.attributes,
-          extendedSettings: {
-            type: 'object',
-            default: {},
-          }
-        }
-
-        return {...props, attributes}
+    // extend attributs with the new extendedSettings object
+    const attributes = {
+      ...props.attributes,
+      extendedSettings: {
+        type: 'object',
+        default: {},
       }
-    )
+    }
+
+    return {...props, attributes}
+  }
+)
+```
 
 Create the higher order component for the `editor.BlockEdit` hook and call `addFilter`:
 
-    const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
-    }, 'withInspectorControls')
+```js
+const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
+}, 'withInspectorControls')
 
-    addFilter(
-      'editor.BlockEdit',
-      'extending-gutenberg/edit',
-      withInspectorControls
-    )
+addFilter(
+  'editor.BlockEdit',
+  'extending-gutenberg/edit',
+  withInspectorControls
+)
+```
 
 ### 7. Implement higher order component
 
 The following code creates the InspectorControls for the column settings:
 
-    const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
-      return ( props ) => {
-        // if not core paragraph block return the simple BlockEdit component
-        if (props.name !== 'core/paragraph') {
-          return (
-            <BlockEdit { ...props } />
-          )
-        }
+```js
+const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
+  return ( props ) => {
+    // if not core paragraph block return the simple BlockEdit component
+    if (props.name !== 'core/paragraph') {
+      return (
+        <BlockEdit { ...props } />
+      )
+    }
 
-        const {attributes, setAttributes} = props
+    const {attributes, setAttributes} = props
 
-        // create <style> block for current settings
-        const id = `#block-${props.clientId}`
-        let includeStyles = false
-        let css = `${id}{`
+    // create <style> block for current settings
+    const id = `#block-${props.clientId}`
+    let includeStyles = false
+    let css = `${id}{`
 
-        if (attributes.extendedSettings.columnCount) {
-          includeStyles = true
-          css += `column-count: ${attributes.extendedSettings.columnCount};`
-        }
+    if (attributes.extendedSettings.columnCount) {
+      includeStyles = true
+      css += `column-count: ${attributes.extendedSettings.columnCount};`
+    }
 
-        if (attributes.extendedSettings.columnGap) {
-          includeStyles = true
-          css += `column-gap: ${attributes.extendedSettings.columnGap};`
-        }
+    if (attributes.extendedSettings.columnGap) {
+      includeStyles = true
+      css += `column-gap: ${attributes.extendedSettings.columnGap};`
+    }
 
-        css += '}'
+    css += '}'
 
-        const beforeBlock = includeStyles ? (
-          <style>
-            {css}
-          </style>
-        ) : null
+    const beforeBlock = includeStyles ? (
+      <style>
+        {css}
+      </style>
+    ) : null
 
-        // return extended BlockEdit component
-        return (
-          <Fragment>
-              {beforeBlock}
-              <BlockEdit { ...props } />
-              <InspectorControls>
-                  <PanelBody title="Columns" initialOpen={ false }>
-                    <RangeControl
-                      label="Column count"
-                      initialPosition={1}
-                      min={1}
-                      max={4}
-                      value={attributes.extendedSettings.columnCount ? attributes.extendedSettings.columnCount : 1}
-                      onChange={(columnCount) => setAttributes({extendedSettings: {...attributes.extendedSettings, columnCount}})}
-                    />
-                    <UnitControl
-                      label="Column gap"
-                      value={attributes.extendedSettings.columnGap ? attributes.extendedSettings.columnGap : '20px'}
-                      units={
-                        [
-                          {
-                            value: 'px',
-                            label: 'px',
-                            default: 20
-                          },
-                          {
-                            value: '%',
-                            label: '%',
-                            default: 4
-                          },
-                          {
-                            value: 'vw',
-                            label: 'vw',
-                            default: 2
-                          },
-                        ]
-                      }
-                      onChange={(columnGap) => setAttributes({extendedSettings: {...attributes.extendedSettings, columnGap}})}
-                    />
-                  </PanelBody>
-              </InspectorControls>
-          </Fragment>
-        );
-      }
-    }, 'withInspectorControls')
+    // return extended BlockEdit component
+    return (
+      <Fragment>
+          {beforeBlock}
+          <BlockEdit { ...props } />
+          <InspectorControls>
+              <PanelBody title="Columns" initialOpen={ false }>
+                <RangeControl
+                  label="Column count"
+                  initialPosition={1}
+                  min={1}
+                  max={4}
+                  value={attributes.extendedSettings.columnCount ? attributes.extendedSettings.columnCount : 1}
+                  onChange={(columnCount) => setAttributes({extendedSettings: {...attributes.extendedSettings, columnCount}})}
+                />
+                <UnitControl
+                  label="Column gap"
+                  value={attributes.extendedSettings.columnGap ? attributes.extendedSettings.columnGap : '20px'}
+                  units={
+                    [
+                      {
+                        value: 'px',
+                        label: 'px',
+                        default: 20
+                      },
+                      {
+                        value: '%',
+                        label: '%',
+                        default: 4
+                      },
+                      {
+                        value: 'vw',
+                        label: 'vw',
+                        default: 2
+                      },
+                    ]
+                  }
+                  onChange={(columnGap) => setAttributes({extendedSettings: {...attributes.extendedSettings, columnGap}})}
+                />
+              </PanelBody>
+          </InspectorControls>
+      </Fragment>
+    );
+  }
+}, 'withInspectorControls')
+```
