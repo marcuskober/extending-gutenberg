@@ -1,8 +1,8 @@
 import { addFilter } from '@wordpress/hooks'
 import { createHigherOrderComponent } from '@wordpress/compose'
 import { Fragment } from '@wordpress/element'
-import { InspectorControls } from '@wordpress/blockEditor'
-import { PanelBody, PanelRow, RangeControl } from '@wordpress/components'
+import { InspectorControls } from '@wordpress/block-editor'
+import { PanelBody, RangeControl } from '@wordpress/components'
 
 const withYourCustomBlockClass = createHigherOrderComponent( ( BlockListBlock ) => {
   return ( props ) => {
@@ -20,8 +20,26 @@ const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
 
     const {attributes, setAttributes} = props
 
+    const id = `#block-${props.clientId}`
+    let includeStyles = false
+    let css = `${id}{`
+
+    if (attributes.extendedSettings.columnCount) {
+      includeStyles = true
+      css += `column-count: ${attributes.extendedSettings.columnCount};`
+    }
+
+    css += '}'
+
+    const beforeBlock = includeStyles ? (
+      <style>
+        {css}
+      </style>
+    ) : null
+
     return (
       <Fragment>
+          {beforeBlock}
           <BlockEdit { ...props } />
           <InspectorControls>
               <PanelBody title="Columns" initialOpen={ false }>
