@@ -114,4 +114,4 @@ addFilter(
   'editor.BlockEdit',
   'extending-gutenberg/edit',
   withInspectorControls
-);
+)
