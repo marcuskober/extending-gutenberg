@@ -24,7 +24,7 @@ add_action('enqueue_block_editor_assets', function() {
     wp_enqueue_script(
         'extending-gutenberg-script',
         EXTGUT_URL . '/build/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-data', 'wp-i18n', 'underscore'],
+        $config['dependencies'],
         $config['version']
     );
 });
