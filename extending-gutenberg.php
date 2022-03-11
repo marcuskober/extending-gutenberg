@@ -49,7 +49,12 @@ add_filter('render_block', function(string $blockContent, array $block): string 
         $blockContent = preg_replace('#^<([^>]+)>#m', '<$1 id="' . $id . '">', $blockContent);
     }
 
-    $style = sprintf('<style>#%s{column-count:%s;}</style>', $id, $block['attrs']['extendedSettings']['columnCount']);
+    $style = sprintf(
+        '<style>#%s{column-count:%s; column-gap:%s;}</style>',
+        $id,
+        isset($block['attrs']['extendedSettings']['columnCount']) ? $block['attrs']['extendedSettings']['columnCount'] : 1,
+        isset($block['attrs']['extendedSettings']['columnGap']) ? $block['attrs']['extendedSettings']['columnGap'] : '20px'
+    );
 
     return $style.$blockContent;
 }, 10, 2 );

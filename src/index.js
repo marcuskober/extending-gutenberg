@@ -2,13 +2,7 @@ import { addFilter } from '@wordpress/hooks'
 import { createHigherOrderComponent } from '@wordpress/compose'
 import { Fragment } from '@wordpress/element'
 import { InspectorControls } from '@wordpress/block-editor'
-import { PanelBody, RangeControl } from '@wordpress/components'
-
-const withYourCustomBlockClass = createHigherOrderComponent( ( BlockListBlock ) => {
-  return ( props ) => {
-    return <BlockListBlock { ...props }/>
-  }
-}, 'withYourCustomBlockClass' )
+import { PanelBody, RangeControl, __experimentalUnitControl as UnitControl } from '@wordpress/components'
 
 const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
   return ( props ) => {
@@ -29,6 +23,11 @@ const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
       css += `column-count: ${attributes.extendedSettings.columnCount};`
     }
 
+    if (attributes.extendedSettings.columnGap) {
+      includeStyles = true
+      css += `column-gap: ${attributes.extendedSettings.columnGap};`
+    }
+
     css += '}'
 
     const beforeBlock = includeStyles ? (
@@ -44,11 +43,36 @@ const withInspectorControls = createHigherOrderComponent( ( BlockEdit ) => {
           <InspectorControls>
               <PanelBody title="Columns" initialOpen={ false }>
                 <RangeControl
+                  label="Column count"
                   initialPosition={1}
                   min={1}
                   max={4}
                   value={attributes.extendedSettings.columnCount ? attributes.extendedSettings.columnCount : 1}
                   onChange={(columnCount) => setAttributes({extendedSettings: {...attributes.extendedSettings, columnCount}})}
+                />
+                <UnitControl
+                  label="Column gap"
+                  value={attributes.extendedSettings.columnGap ? attributes.extendedSettings.columnGap : '20px'}
+                  units={
+                    [
+                      {
+                        value: 'px',
+                        label: 'px',
+                        default: 20
+                      },
+                      {
+                        value: '%',
+                        label: '%',
+                        default: 4
+                      },
+                      {
+                        value: 'vw',
+                        label: 'vw',
+                        default: 2
+                      },
+                    ]
+                  }
+                  onChange={(columnGap) => setAttributes({extendedSettings: {...attributes.extendedSettings, columnGap}})}
                 />
               </PanelBody>
           </InspectorControls>
@@ -75,12 +99,6 @@ addFilter(
 
     return {...props, attributes}
   }
-)
-
-addFilter(
-	'editor.BlockListBlock',
-	'extending-gutenberg/list-block',
-	withYourCustomBlockClass
 )
 
 addFilter(
